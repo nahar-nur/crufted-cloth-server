@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require ('cors');
+const cors = require('cors');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
@@ -19,60 +19,78 @@ console.log(uri);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 });
 
 async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
-    const craftCollection = client.db('craftDB').collection('craft');
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        // await client.connect();
+        const craftCollection = client.db('craftDB').collection('craft');
 
-    app.get('/craft', async(req,res)=>{
-        const cursor = craftCollection.find();
-        const result = await cursor.toArray();
-        res.send(result)
-    })
+        app.get('/craft', async (req, res) => {
+            const cursor = craftCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
 
-    app.get('/craft/:id', async(req,res)=>{
-        const id = req.params.id;
-        const query = {_id: new ObjectId(id)};
-        const result = await craftCollection.findOne(query);
-        res.send(result)
-    })
+        app.get('/craft/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await craftCollection.findOne(query);
+            res.send(result)
+        })
 
-    app.post('/craft', async(req,res)=>{
-        const newCraft = req.body;
-        console.log(newCraft);
-        const result = await craftCollection.insertOne(newCraft)
-        res.send(result)
-    })
+        app.post('/craft', async (req, res) => {
+            const newCraft = req.body;
+            console.log(newCraft);
+            const result = await craftCollection.insertOne(newCraft)
+            res.send(result)
+        })
 
-    app.delete('/craft/:id',async(req,res)=>{
-        const id = req.params.id;
-        const query ={_id: new ObjectId(id)}
-        const result = await craftCollection.deleteOne(query);
-        res.send(result)
-    })
-    // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
+        app.put('/craft/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const options = { upsert: true };
+            const updateCraft = req.body;
+            const craft = {
+                $set:{
+                    name:updateCraft.name,
+                    image:updateCraft.image,
+                    price:updateCraft.price,
+                    type:updateCraft.type
+                }
+            }
+            const result = await craftCollection.updateOne(filter,craft, options)
+            res.send(result);
+        })
+
+
+        app.delete('/craft/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await craftCollection.deleteOne(query);
+            res.send(result)
+        })
+        // Send a ping to confirm a successful connection
+        // await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+        // Ensures that the client will close when you finish/error
+        // await client.close();
+    }
 }
 run().catch(console.dir);
 
 
-app.get('/', (req, res)=>{
+app.get('/', (req, res) => {
     res.send('crufted cloth server is running')
 })
 
-app.listen(port, ()=>{
+app.listen(port, () => {
     console.log(`crufted cloth server is running on port:${port}`);
 })
